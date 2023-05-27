@@ -55,7 +55,7 @@ transformations_list = {
 		'num_args': 2,
 		'pointer': tLossy
 	},
-	'BMS': {
+	'bms': {
 		'num_args': 1,
 		'pointer': tBMS
 	}
@@ -101,7 +101,7 @@ class Transformation:
 		# Обработка ошибки неверного указания количества аргументов преобразования
 		if len(transform_params) != self.transform_info['num_args']:
 			raise ValueError(
-				'CLASS::TRANSFORMATION::INIT' + 
+				'CLASS::TRANSFORMATION::INIT ' + 
 				'Передано неверное количество аргументов преобразования ' +
 				name_tran_mat_fun + ' ' + 
 				len(transform_params) + ' вместо ' +

@@ -10,12 +10,11 @@ from . import transformation as tf
 # Класс оптического чипа
 class Chip:
 
-	def __init__(self, chip_dimension, noise=0):
+	def __init__(self, dimension):
 		self.transformations = list()
 		self.fixed_transforms = list()
 		self.unfixed_transforms = list()
-		self.chip_dimension = chip_dimension
-		self.noise = noise
+		self.dimension = dimension
 		
 
 
@@ -25,7 +24,7 @@ class Chip:
 		transform = tf.Transformation(
 			tid,
 			name_tran_mat_fun,
-			[self.chip_dimension, inlet],
+			[self.dimension, inlet],
 			params,
 			bounds
 		)
@@ -67,26 +66,18 @@ class Chip:
 		
 
 
-	def compute(self, in_state, return_unnoise_too=False):
+	def compute(self, in_state: np.array):
 		# Инициализация выходного состояния
-		out_state = in_state
-		
+		out_state = in_state.copy()
+
 		for t in self.transformations:
 			out_state = t(out_state)
-			
-		if self.noise != 0:
-			out_state_unnoised = out_state.copy()
-			out_state_mistake = np.abs(np.random.normal(0, self.noise, [2,1]))
-			out_state += out_state*out_state_mistake
 		
-		if return_unnoise_too:
-			return [out_state, out_state_unnoised]
-		else:
-			return out_state
+		return out_state
 		
 
 
-	def getFixedParamBounds(self):
+	def getFixedParamBounds(self) -> tuple:
 		bounds = ()
 		for t in self.transformations:
 			if self.unfixed_transforms.count(t.id) == 0:
@@ -96,11 +87,10 @@ class Chip:
 	
 
 
-	def getChipSetupInfo(self):
+	def getChipSetupInfo(self) -> dict:
 		info = dict()
 		
-		info['dimention'] = self.chip_dimension
-		info['noise'] = self.noise
+		info['dimention'] = self.dimension
 		info['transforms'] = {}
 		for t in self.transformations:
 			unfixed = False

@@ -4,11 +4,13 @@ import scipy.optimize as sp_opt
 
 # Подключение пользовательских модулей
 from . import functions as fn
-	
+from . import chip as ch
 
+# Количество попыток алгоритма
+N: int = 5
 	
-def minimizeFunction(optimize_params, args):
-	chip = args[0]
+def minimizeFunction(optimize_params: list, args: list):
+	chip:ch.Chip = args[0].copy()
 	train_data = args[1]
 	
 	chip.changeFixedParams(optimize_params)
@@ -17,14 +19,21 @@ def minimizeFunction(optimize_params, args):
 
 	return deviations[0]
 	
-def differentialEvolution(chip, train_data, params, display=False, print_data=True):
+
+
+def differentialEvolution(chip:ch.Chip, train_data:list(), params:dict(), display=False, print_info=True):
 	
 	# Начало отсчёта времени моделирования
 	timer = time.perf_counter()
 
-	for i in range(3):
-		print ("Start atempt " + str(i) + ": ", end='')
-	
+	attempt = 0
+
+	for i in range(N):
+		if print_info:
+			print ("Start atempt " + str(i) + ": ", end='')
+
+		attempt = i+1
+
 		result = sp_opt.differential_evolution(
 			func=minimizeFunction,
 			bounds=chip.getFixedParamBounds(),
@@ -32,7 +41,6 @@ def differentialEvolution(chip, train_data, params, display=False, print_data=Tr
 			strategy=params['strategy'],
 			maxiter=params['maxiter'],
 			tol=params['tol'],
-			atol=params['atol'],
 			popsize=params['popsize'],
 			mutation=params['mutation'],
 			recombination=params['recombination'],
@@ -41,16 +49,17 @@ def differentialEvolution(chip, train_data, params, display=False, print_data=Tr
 			disp=display
 		)
 
-		if result.success:
-			print("Success")
-			break
-		else:
-			print("Fail")
+		if print_info:
+			if result.success:
+				print("Success")
+				break
+			else:
+				print("Fail")
 
 	# Окончание отсчёта времени моделирования
-	timer = time.perf_counter() - timer
+	timer = int(time.perf_counter() - timer)
 	
-	if print_data:
+	if print_info:
 		# Вывод части данных томографии в консоль
 		print(
 			"time: " + str(timer) + " sec\n" + 
@@ -58,7 +67,7 @@ def differentialEvolution(chip, train_data, params, display=False, print_data=Tr
 			"fun: " + str(result.fun)
 		)
 	
-	return [result, timer]
+	return [result, timer, attempt]
 	
 	
 	
