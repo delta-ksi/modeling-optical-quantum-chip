@@ -6,20 +6,18 @@ import scipy.stats as st
 from . import chip as ch
 
 
+# Функция получения относительной фазы на выходах чипа
+def getRelativePhase(state: np.array) -> tuple:
+	normState = state / np.sqrt( np.power(np.abs(state), 2) )
+	stateShift = normState * np.conj(normState[0])
+	statePhase = np.angle(stateShift, deg=False)
 
-def getPhase(state0: np.array, state1: np.array) -> np.array:
-	#tmp = np.real(state0)*np.real(state1) + np.imag(state0)*np.imag(state1)
-	#tmp = tmp / np.sqrt(np.power(np.abs(state0),2))
-	#tmp = tmp / np.sqrt(np.power(np.abs(state1),2))
-	#tmp[0] = 1
-	#phase = np.arccos(tmp)
-	phi1 = np.arctan2(np.imag(state0),np.real(state0))
-	phi2 = np.arctan2(np.imag(state1),np.real(state1))
+	return (statePhase, stateShift)
 
-	phase = np.abs(phi1 - phi2)
-	return phase
-
-
+# Функция получения фаз между выходами, как в эксперименте
+def getExperimentPhase(state: np.array) -> np.array:	
+	
+	return []
 
 # Функиция для определения отклонения предсказанного чипа от экспериментального
 def getDeviation(chip:ch.Chip, data:list):
@@ -28,6 +26,7 @@ def getDeviation(chip:ch.Chip, data:list):
 	deviation_pr_2 = 0
 	deviation_t_2 = 0
 	deviation_t_rel = 0
+	deviation_phi = 0
 
 	for d in data:
 		# Инициализация входного и выходного состояний из массива data
@@ -44,7 +43,7 @@ def getDeviation(chip:ch.Chip, data:list):
 		out_state_pred = chip.compute(in_state_pred)
 
 		# Вычисление разности фаз между выходами
-		out_phi_pred = getPhase(out_state_pred, out_state_pred[0])
+		out_phi_pred, out_stateShift_pred = getRelativePhase(out_state_pred)
 
 		out_state_pred = np.absolute(out_state_pred)
 		out_state_pred = np.power(out_state_pred, 2)
@@ -52,23 +51,65 @@ def getDeviation(chip:ch.Chip, data:list):
 		in_state_pred = np.absolute(in_state_pred)
 		in_state_pred = np.power(in_state_pred, 2)
 
-		out_state_data2 = np.multiply(out_state_data,np.exp(np.multiply(1j, out_phi_data)))
-		out_state_pred2 = np.multiply(out_state_pred,np.exp(np.multiply(1j, out_phi_pred)))
+		out_state_data2 = np.multiply(out_state_data, np.exp(np.multiply(1j, out_phi_data)))
+		out_state_pred2 = np.multiply(out_state_pred, out_stateShift_pred)
 
 		# Определение оценок отклонения
-		deviation_pr_2 += np.power(np.subtract(out_state_pred / out_state_pred.sum(), out_state_data / out_state_data.sum()), 2).sum()
-		deviation_t_2 += np.power(np.subtract(np.abs(out_state_pred), np.abs(out_state_data)) / in_state_pred.sum(), 2).sum()
-		deviation_t_rel += np.abs(out_state_pred).sum() / np.abs(out_state_data).sum()
-
+		deviation_pr_2 	+= np.power	( np.abs(np.subtract(out_state_pred2 / out_state_pred.sum(), out_state_data2 / out_state_data.sum()) ), 2).sum()
+		deviation_t_2 	+= np.power	(np.subtract(np.abs(out_state_pred), np.abs(out_state_data)) / in_state_pred.sum(), 2).sum()
+  
+		deviation_t_rel += np.abs	(out_state_pred).sum() / np.abs(out_state_data).sum()
+		deviation_phi 	+= np.power	(np.subtract(out_phi_data, out_phi_pred), 2).sum()
+ 
+ 
 	# Вычисление полного отклонения
-	deviation = np.sqrt(np.abs(deviation_pr_2) + deviation_t_2)
+	deviation = np.sqrt(deviation_pr_2 + deviation_t_2)
 
-	return [deviation, np.sqrt(np.abs(deviation_pr_2)), np.sqrt(deviation_t_2), deviation_t_rel] 
+	return [deviation, np.sqrt(np.abs(deviation_pr_2)), np.sqrt(deviation_t_2), deviation_t_rel, np.sqrt(deviation_phi)] 
 	
+
+# Функиция для определения отклонения предсказанного чипа от экспериментального
+def getTrainDeviation(chip	: ch.OpticalChip,
+                      data	: list				) -> float:
+	
+	# Оценки квадратов отклонений по разным параметрам
+	deviation_pr_2 = 0
+	deviation_t_2 = 0
+ 
+	for d in data:
+		# Инициализация входного и выходного состояний из массива data
+		inState 		= d[0].copy()
+		outStateData 	= d[1].copy()
+		outPhaseData 	= d[2].copy()
+  
+		chip.changeUnfixedArgs(d[3].copy())
+		
+		# Вычисление выходного состояния предсказанного чипа
+		# matrix  = chip.getChipTransformation()
+		# outStatePred = np.dot(matrix, inState)
+		outStatePred = chip.compute(inState)
+
+		# Вычисление разности фаз между выходами
+		outPhasePred, out_stateShift_pred = getRelativePhase(outStatePred)
+
+		outStatePredAbs = np.power(np.absolute(outStatePred), 2)
+		inStateAbs 		= np.power(np.absolute(inState), 2)
+
+		outStateData2 = np.multiply(outStateData, np.exp(np.multiply(1j, outPhaseData)))
+		outStatePred2 = np.multiply(outStatePredAbs, out_stateShift_pred)
+
+		# Определение оценок отклонения
+		deviation_pr_2 	+= np.power	(np.abs( np.subtract(outStatePred2 / outStatePredAbs.sum(), outStateData2 / outStateData.sum()) ), 2).sum()
+		deviation_t_2 	+= np.power	(np.subtract(np.abs(outStatePredAbs), np.abs(outStateData)) / inStateAbs.sum(), 2).sum()
+ 
+	# Вычисление полного отклонения
+	deviation = np.sqrt(deviation_pr_2 + deviation_t_2)
+
+	return deviation 
 
 
 # Функция генерации данных для обучения и тестирования
-def generateData(chip: ch.Chip, data_vol: int, regime: str, noise:float=0):
+def generateData(chip: ch.Chip, size: int, regime: str, noise:float=0):
 	# # data_vol - Объём информационной выборки для обучения и тестрирования
 	#
 	# # regime - режим входного состояния
@@ -87,7 +128,7 @@ def generateData(chip: ch.Chip, data_vol: int, regime: str, noise:float=0):
 	# Кол-во входов и выходов чипа
 	num_inlet = int(np.power(2, chip.dimension))
 
-	for i in range(data_vol):
+	for i in range(size):
 		# Присвоение значения входному состоянию, в
 		# соответствие с режимом (regime)
 		if		regime == 'f':
@@ -107,18 +148,6 @@ def generateData(chip: ch.Chip, data_vol: int, regime: str, noise:float=0):
 		elif	regime == 's':
 			alp = float(np.random.uniform(0, 2*np.pi, 1))
 			in_state = np.array([[1], [np.exp(1j*alp)]], dtype=complex)
-			# # print(np.power(np.abs(in_state), 2).sum())
-			# print(in_state)
-			# # print(np.sqrt( np.power(np.abs(in_state), 2).sum() ))
-			# in_state = in_state / np.sqrt( np.power(np.abs(in_state), 2).sum() )
-			# # print(np.power(np.abs(in_state),2).sum())
-			# print(in_state)
-			# # print(np.sqrt( np.power(np.abs(in_state), 2).sum() ))
-
-			# # in_state = np.random.normal(0, 1, [num_inlet, 1]) + 1j*np.random.normal(0, 1, [num_inlet, 1])
-			# # in_state = in_state / np.sqrt( np.power(np.abs(in_state), 2).sum() )
-			# # in_state[0] = np.abs(in_state[0])
-			# # print(in_state)
 
 		else:
 			raise ValueError(
@@ -150,7 +179,7 @@ def generateData(chip: ch.Chip, data_vol: int, regime: str, noise:float=0):
 			out_state = chip.compute(in_state[:,[n]])
 
 			# Вычисление разности фаз между выходами
-			phi_out_state = getPhase(out_state, out_state[0])
+			phi_out_state, out_stateShift = getRelativePhase(out_state)
 
 			out_state = np.abs(out_state)
 			out_state = np.power(out_state, 2)
@@ -163,6 +192,90 @@ def generateData(chip: ch.Chip, data_vol: int, regime: str, noise:float=0):
 
 	return data
 
+# Функция генерации данных для обучения и тестирования
+def generateData2(chip	: ch.OpticalChip,
+                  size	: int,
+                  regime: str	= 'n',
+                  noise	: float = 0):
+	# # data_vol - Объём информационной выборки для обучения и тестрирования
+	#
+	# # regime - режим входного состояния
+	# 'f' = 'first'				- Входное состояние подаётся только в первый вход
+	# 'aa' = 'alternately all'	- Входное состояние подаётся во все входы поочерёдно (за эксперимент)
+	# 'ra' = 'random all'		- Входное состояние подаётся в произвольный вход по равномерному распрелделению
+	# 'n' = 'normal'			- Входное состояние произвольное распределённое по нормальному распределению
+
+	# Вся информация обучающей выборки
+	data = list()
+
+	# Инициализация входного и выходного состояний
+	inState		: np.array	= []
+	outState 	: np.array	= []
+
+	# Кол-во входов и выходов чипа
+	chipSize = chip._chipSize
+
+	for i in range(size):
+		# Присвоение значения входному состоянию, в
+		# соответствие с режимом (regime)
+		if		regime == 'f':
+			inState = np.eye(chipSize)[:,[0]]
+
+		elif	regime == 'aa':
+			inState = np.eye(chipSize)
+
+		elif	regime == 'ra':
+			rn = np.random.random_integers(0, chipSize-1, 1)
+			inState = np.eye(chipSize)[:,[*rn]]
+
+		elif	regime == 'n':
+			inState = np.random.normal(0, 1, [chipSize, 1]) + 1j*np.random.normal(0, 1, [chipSize, 1])
+			inState = inState / np.sqrt( np.power(np.abs(inState), 2).sum() )
+
+		elif	regime == 's':
+			alp = float(np.random.uniform(0, 2*np.pi, 1))
+			inState = np.array([[1], [np.exp(1j*alp)]], dtype=complex)
+
+		else:
+			raise ValueError(
+				"ERROR in generateData with parameter 'regime'. " + 
+				f"Функции передан неизвестный режим: '{regime}'!"
+			)
+
+		# Кол-во измерений на один эксперимент
+		N = inState.shape[1]
+		
+		for i in range(N):
+			# Инициализация массивов
+			unfixedArgs = list()
+
+			# Назначение изменяемых параметров чипа произвольными значениями
+			for j in chip._unfixedTransformations:
+				# Взятие информации о преобразование чипа
+				transformation = chip._transformations[j]
+				argsNum = transformation._argsNum
+				bounds = transformation._bounds
+				
+				# Заполнение массива изменяемых параметров
+				for k in range(argsNum):
+					bound = bounds[k]
+					unfixedArgs.append(*np.random.uniform(bound[0], bound[1], 1))
+
+			chip.changeUnfixedArgs(unfixedArgs)
+			outState = np.dot(chip.getChipTransformation(), inState[:,[i]])
+
+			# Вычисление разности фаз между выходами
+			phi_outState, outStateShift = getRelativePhase(outState)
+
+			outState = np.power(np.abs(outState), 2)
+
+			if noise != 0:
+				mistake = np.abs(np.random.normal(0, noise, [inState.shape[0], 1]))
+				outState += outState * mistake
+		
+			data.append(tuple([inState[:,[i]], outState, phi_outState, unfixedArgs])) # 
+
+	return data
 
 
 def testingDeviation(chip: ch.Chip, test_data: list, pred_params: list):
@@ -174,6 +287,7 @@ def testingDeviation(chip: ch.Chip, test_data: list, pred_params: list):
 	deviate_pr = list()
 	deviate_t = list()
 	deviate_t_rel = list()
+	deviate_phi = list()
 		
 	for data in test_data:
 		deviations = getDeviation(tchip, [data])
@@ -182,24 +296,27 @@ def testingDeviation(chip: ch.Chip, test_data: list, pred_params: list):
 		deviate_pr.append(deviations[1])
 		deviate_t.append(deviations[2])
 		deviate_t_rel.append(deviations[3])
+		deviate_phi.append(deviations[4])
 
-	return [deviate, deviate_pr, deviate_t, deviate_t_rel]
+	return [deviate, deviate_pr, deviate_t, deviate_t_rel, deviate_phi]
 
 
 
 def calTestInfo(deviations: list):
-	
+
 	info = dict()
 
 	info['M[p]']		= np.mean(deviations[0])
 	info['M[pPr]']		= np.mean(deviations[1])
 	info['M[pT]']		= np.mean(deviations[2])
 	info['M[pTrel]']	= np.mean(deviations[3])
+	info['M[pPhi]']		= np.mean(deviations[4])
 
 	info['D[p]']		= np.var(deviations[0])
 	info['D[pPr]'] 		= np.var(deviations[1])
 	info['D[pT]'] 		= np.var(deviations[2])
 	info['D[pTrel]'] 	= np.var(deviations[3])
+	info['D[pPhi]'] 	= np.var(deviations[4])
 
 	info['Q_0.9[p]']	= np.quantile(deviations[0], 0.9)
 	info['Q_0.9[pPr]'] 	= np.quantile(deviations[1], 0.9)
@@ -216,11 +333,13 @@ def calTestInfo(deviations: list):
 	info['pPr_max']		= np.max(deviations[1])
 	info['pT_max']		= np.max(deviations[2])
 	info['pTrel_max']	= np.max(deviations[3])
+	info['pPhi_max']	= np.max(deviations[4])
 
 	info['p_min']		= np.min(deviations[0])
 	info['pPr_min']		= np.min(deviations[1])
 	info['pT_min']		= np.min(deviations[2])
 	info['pTrel_min']	= np.min(deviations[3])
+	info['pPhi_min']	= np.min(deviations[4])
 
 	return info
 
@@ -238,7 +357,10 @@ def chipFromInfo(info: dict):
 
 		transform	= transformations[i]
 
-		name		= transform['name']
+		if transform['name'] == "phaseb":
+			name	= "phase"
+		else:
+			name	= transform['name']
 		inlet		= transform['inlet']
 		parameters	= transform['parameters']
 		bounds		= transform['bounds']

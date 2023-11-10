@@ -6,8 +6,19 @@ import os
 
 
 
-def pushToDataFile(info: dict, dir_pass: str="", gendir=True) -> None:
+def createInfoFile(info: dict, dir_pass: str="") -> None:
+    if dir_pass != "":
+        file_pass = dir_pass + '/info'
 
+        output_s = pprint.pformat(info)
+
+        # Запись всей информации о характеризации в файл
+        with open(file_pass, 'wt') as fout:
+            fout.write(output_s)
+
+
+
+def pushToDataFile(info: dict, dir_pass: str="", gendir=True) -> None:
     # Создание директории
     if gendir:
             today: datetime = datetime.datetime.today()
@@ -20,19 +31,6 @@ def pushToDataFile(info: dict, dir_pass: str="", gendir=True) -> None:
         # Запись всех данных характеризации в файл
         with open(file_pass, 'wb') as fout:
             pickle.dump(info, fout)
-
-
-
-def createInfoFile(info: dict, dir_pass: str="") -> None:
-
-    if dir_pass != "":
-        file_pass = dir_pass + '/info'
-
-        output_s = pprint.pformat(info)
-
-        # Запись всей информации о характеризации в файл
-        with open(file_pass, 'wt') as fout:
-            fout.write(output_s)
 
 
 
