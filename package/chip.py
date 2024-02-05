@@ -1,6 +1,7 @@
 # Подключение общих модулей
 import copy
 import numpy as np
+from math import pi
 
 # Подключение пользовательских модулей
 from . import transformation as tf
@@ -193,7 +194,7 @@ class OpticalChip:
   
 		return np.linalg.multi_dot([i.getMatrix(self._chipSize) for i in self._transformations[::-1]])
 
-	def genChipInfo(self) -> dict:
+	def getChipInfo(self) -> dict:
 		info = dict()
 		
 		# Init main dict fields
@@ -223,6 +224,56 @@ class OpticalChip:
 		return copy.deepcopy(self)
 
 		
+def chipFromInfo(info : dict) -> OpticalChip:
+	chipName	= info['name']
+	chipSize	= info['size']
+	number 		= info['transformations']['number']
+	
+	chip = OpticalChip(chipSize, chipName)
+	
+	for i in range(number):
+		transformationInfo	= info['transformations'][i]
+		name 				= transformationInfo['name']
+		args 				= transformationInfo['args']
+		bounds 				= transformationInfo['bounds']
+		unfixed				= transformationInfo['unfixed']
+		
+		transformation = tf.transformationsList[name]
+		chip.newTransformation(transformation,
+                         	   args		= args,
+                               bounds	= bounds,
+                               unfixed	= unfixed)
+	
+	return chip
 
 
-
+def get_CNOT_ODRS_chip() -> OpticalChip:
+	chip = OpticalChip(4, "CNOT-optical-dual-rail-simplify")
+	chip.newTransformation(tf.hOTphase_4, 	bounds=([0, 2*pi], [0, 2*pi], [0, 2*pi])				)
+	chip.newTransformation(tf.hOTlossy_4, 	bounds=([0.5, 1], [0.5, 1], [0.5, 1], [0.5, 1])			)
+	chip.newTransformation(tf.hOTbms_4, 	bounds=([0.4, 0.6], [0.4, 0.6])							)
+	chip.newTransformation(tf.hOTphase_4, 	bounds=([0, 2*pi], [0, 2*pi], [0, 2*pi]), unfixed=True	)
+	chip.newTransformation(tf.hOTphase_4, 	bounds=([0, 2*pi], [0, 2*pi], [0, 2*pi])				)
+	chip.newTransformation(tf.hOTlossy_4, 	bounds=([0.5, 1], [0.5, 1], [0.5, 1], [0.5, 1])			)
+	chip.newTransformation(tf.hOTbms_4, 	bounds=([0.4, 0.6], [0.4, 0.6])							)
+	chip.newTransformation(tf.hOTphase_4, 	bounds=([0, 2*pi], [0, 2*pi], [0, 2*pi]), unfixed=True	)
+	chip.newTransformation(tf.hOTphase_4, 	bounds=([0, 2*pi], [0, 2*pi], [0, 2*pi])				)
+	chip.newTransformation(tf.hOTlossy_4, 	bounds=([0.5, 1], [0.5, 1], [0.5, 1], [0.5, 1])			)
+	chip.newTransformation(tf.hOTbms_2_2, 	bounds=([0.4, 0.6],)									)
+	chip.newTransformation(tf.hOTphase_2_2, bounds=([0, 2*pi], [0, 2*pi])							)
+	chip.newTransformation(tf.hOTlossy_2_2, bounds=([0.5, 1], [0.5, 1])								)
+	chip.newTransformation(tf.hOTbms_2_1, 	bounds=([0.4, 0.6],)									)
+	chip.newTransformation(tf.hOTphase_2_1, bounds=([0, 2*pi], [0, 2*pi])							)
+	chip.newTransformation(tf.hOTlossy_2_1, bounds=([0.5, 1], [0.5, 1])								)
+	chip.newTransformation(tf.hOTbms_2_2, 	bounds=([0.4, 0.6],)									)
+	chip.newTransformation(tf.hOTphase_2_2, bounds=([0, 2*pi], [0, 2*pi])							)
+	chip.newTransformation(tf.hOTlossy_2_2, bounds=([0.5, 1], [0.5, 1])								)
+	chip.newTransformation(tf.hOTphase_4, 	bounds=([0, 2*pi], [0, 2*pi], [0, 2*pi]), unfixed=True	)
+	chip.newTransformation(tf.hOTbms_4, 	bounds=([0.4, 0.6], [0.4, 0.6])							)
+	chip.newTransformation(tf.hOTphase_4, 	bounds=([0, 2*pi], [0, 2*pi], [0, 2*pi]), unfixed=True	)
+	chip.newTransformation(tf.hOTphase_4, 	bounds=([0, 2*pi], [0, 2*pi], [0, 2*pi])				)
+	chip.newTransformation(tf.hOTlossy_4, 	bounds=([0.5, 1], [0.5, 1], [0.5, 1], [0.5, 1])			)
+	chip.newTransformation(tf.hOTbms_4, 	bounds=([0.4, 0.6], [0.4, 0.6])							)
+	chip.newTransformation(tf.hOTphase_4, 	bounds=([0, 2*pi], [0, 2*pi], [0, 2*pi])				)
+	chip.newTransformation(tf.hOTlossy_4, 	bounds=([0.5, 1], [0.5, 1], [0.5, 1], [0.5, 1])			)
+	return chip

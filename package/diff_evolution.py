@@ -88,7 +88,7 @@ def differentialEvolution2(chip			: ch.OpticalChip,
                            data			: list(),
                            params		: dict(),
                            display		= False,
-                           log			= True):
+                           log			= True				) -> dict:
 	
 	# Начало отсчёта времени моделирования
 	timer = time.perf_counter()
@@ -121,7 +121,7 @@ def differentialEvolution2(chip			: ch.OpticalChip,
 
 		if log:
 			if result.success:
-				if (result.fun < 10*params['noise']):
+				if (result.fun < 3*params['noise']):
 					print("Success")
 					break
 				else:
@@ -140,6 +140,14 @@ def differentialEvolution2(chip			: ch.OpticalChip,
 			"fun: " + str(result.fun)
 		)
 	
-	return [result, timer, attempt]
+	info : dict = {
+		'attemps'				: attempt,
+		'time'					: timer,
+		'iterations'			: result.nit,
+		'predicted-arguments'	: result.x,
+		'deviation'				: result.fun
+	}
+ 
+	return info
 	
 	

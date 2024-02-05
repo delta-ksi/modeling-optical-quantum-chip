@@ -397,7 +397,8 @@ class OpticalTransformation:
 			'args'		: self._args,
 			'bounds'	: self._bounds,
 			'position'	: self._position,
-			'size'		: self._size
+			'size'		: self._size,
+			'isDistor'	: self._isDistor
 		}
   
 		return info
@@ -405,7 +406,8 @@ class OpticalTransformation:
 	def copy(self):
 		return copy.deepcopy(self)
 	
-	
+    
+ 
 # Относительная фазовая задержка
 def tfPhaseRel_2(args):
 	p = args[0]
@@ -504,8 +506,8 @@ def tfBMS_4(args):
 	return u
 
 # 
-def tfBMS_2_2(arguments):
-	r = arguments[0]
+def tfBMS_2_2(args):
+	r = args[0]
 	
 	u = np.array(
 		[[1, 0, 0, 0],
@@ -518,9 +520,9 @@ def tfBMS_2_2(arguments):
 	return u
 
 # 
-def tfPhase_2_2(arguments):
-	p0 = arguments[0]
-	p1 = arguments[1]
+def tfPhase_2_2(args):
+	p0 = args[0]
+	p1 = args[1]
 	
 	u = np.array(
 		[[1, 0, 0, 0],
@@ -534,9 +536,9 @@ def tfPhase_2_2(arguments):
 
 
 # 
-def tfPhase_2_0(arguments):
-	p0 = arguments[0]
-	p1 = arguments[1]
+def tfPhase_2_0(args):
+	p0 = args[0]
+	p1 = args[1]
 	
 	u = np.array(
 		[[cm.exp(1j*p0), 0, 0, 0],
@@ -549,9 +551,9 @@ def tfPhase_2_0(arguments):
 	return u
 
 # 
-def tfLossy_2_2(arguments):
-	t0 = arguments[0]
-	t1 = arguments[1]
+def tfLossy_2_2(args):
+	t0 = args[0]
+	t1 = args[1]
 	
 	u = np.array(
 		[[1, 0, 0, 0],
@@ -564,8 +566,8 @@ def tfLossy_2_2(arguments):
 	return u
 
 # 
-def tfBMS_2_1(arguments):
-	r = arguments[0]
+def tfBMS_2_1(args):
+	r = args[0]
 	
 	u = np.array(
 		[[1, 0, 0, 0],
@@ -578,9 +580,9 @@ def tfBMS_2_1(arguments):
 	return u
 
 # 
-def tfPhase_2_1(arguments):
-	p0 = arguments[0]
-	p1 = arguments[1]
+def tfPhase_2_1(args):
+	p0 = args[0]
+	p1 = args[1]
 	
 	u = np.array(
 		[[1, 0, 0, 0],
@@ -593,9 +595,9 @@ def tfPhase_2_1(arguments):
 	return u
 
 # 
-def tfLossy_2_1(arguments):
-	t0 = arguments[0]
-	t1 = arguments[1]
+def tfLossy_2_1(args):
+	t0 = args[0]
+	t1 = args[1]
 	
 	u = np.array(
 		[[1, 0, 0, 0],
@@ -607,19 +609,32 @@ def tfLossy_2_1(arguments):
 	
 	return u
  
-hOTphase_2		= OpticalTransformation(tfPhaseRel_2,	2,	name='phase_2', 	argsNum=1, isDistor=True				)
-hOTlossy_2		= OpticalTransformation(tfLossy_2, 		2,	name='lossy_2', 	argsNum=2, isDistor=True				)
-hOTbms_2		= OpticalTransformation(tfBMS_2, 		2,	name='bms_2', 		argsNum=1, isDistor=False				)
-hOTphase_4		= OpticalTransformation(tfPhase_4, 		4,	name='phase_4', 	argsNum=3, isDistor=True				)
-hOTlossy_4		= OpticalTransformation(tfLossy_4, 		4,	name='lossy_4', 	argsNum=4, isDistor=True				)
-hOTbms_4		= OpticalTransformation(tfBMS_4, 		4,	name='bms_4', 		argsNum=2, isDistor=False				)
-hOTphase_2_2	= OpticalTransformation(tfPhase_2_2, 	4,	name='phase_2_2', 	argsNum=2, isDistor=True)
-hOTlossy_2_2	= OpticalTransformation(tfLossy_2_2, 	4,	name='lossy_2_2', 	argsNum=2, isDistor=True)
-hOTbms_2_2		= OpticalTransformation(tfBMS_2_2, 		4,	name='bms_2_2', 	argsNum=1, isDistor=False)
-hOTphase_2_1	= OpticalTransformation(tfPhase_2_1, 	4,	name='phase_2_1', 	argsNum=2, isDistor=True)
-hOTlossy_2_1	= OpticalTransformation(tfLossy_2_1, 	4,	name='lossy_2_1', 	argsNum=2, isDistor=True)
-hOTbms_2_1		= OpticalTransformation(tfBMS_2_1, 		4,	name='bms_2_1', 	argsNum=1, isDistor=False)
+hOTphase_2		= OpticalTransformation(tfPhaseRel_2,	2,	name='phase_2', 	argsNum=1, isDistor=True	)
+hOTlossy_2		= OpticalTransformation(tfLossy_2, 		2,	name='lossy_2', 	argsNum=2, isDistor=True	)
+hOTbms_2		= OpticalTransformation(tfBMS_2, 		2,	name='bms_2', 		argsNum=1, isDistor=False	)
+hOTphase_4		= OpticalTransformation(tfPhase_4, 		4,	name='phase_4', 	argsNum=3, isDistor=True	)
+hOTlossy_4		= OpticalTransformation(tfLossy_4, 		4,	name='lossy_4', 	argsNum=4, isDistor=True	)
+hOTbms_4		= OpticalTransformation(tfBMS_4, 		4,	name='bms_4', 		argsNum=2, isDistor=False	)
+hOTphase_2_2	= OpticalTransformation(tfPhase_2_2, 	4,	name='phase_2_2', 	argsNum=2, isDistor=True	)
+hOTlossy_2_2	= OpticalTransformation(tfLossy_2_2, 	4,	name='lossy_2_2', 	argsNum=2, isDistor=True	)
+hOTbms_2_2		= OpticalTransformation(tfBMS_2_2, 		4,	name='bms_2_2', 	argsNum=1, isDistor=False	)
+hOTphase_2_1	= OpticalTransformation(tfPhase_2_1, 	4,	name='phase_2_1', 	argsNum=2, isDistor=True	)
+hOTlossy_2_1	= OpticalTransformation(tfLossy_2_1, 	4,	name='lossy_2_1', 	argsNum=2, isDistor=True	)
+hOTbms_2_1		= OpticalTransformation(tfBMS_2_1, 		4,	name='bms_2_1', 	argsNum=1, isDistor=False	)
 
-
+transformationsList = {
+    'phase_2'	: hOTphase_2,
+    'lossy_2'	: hOTlossy_2,
+    'bms_2'		: hOTbms_2,
+    'phase_4'	: hOTphase_4,
+    'lossy_4'	: hOTlossy_4,
+    'bms_4'		: hOTbms_4,
+    'phase_2_2'	: hOTphase_2_2,
+    'lossy_2_2'	: hOTlossy_2_2,
+    'bms_2_2'	: hOTbms_2_2,
+    'phase_2_1'	: hOTphase_2_1,
+    'lossy_2_1'	: hOTlossy_2_1,
+    'bms_2_1'	: hOTbms_2_1
+}
 
 

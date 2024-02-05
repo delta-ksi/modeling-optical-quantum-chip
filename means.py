@@ -13,18 +13,24 @@ import package.data_files as df
 if __name__ == '__main__':
     
     #
-    dir_pass:list = sys.argv[1:]
+    dirPass:list = sys.argv[1:]
 
-    noise:list = list()
-    MpPr:list = list()
-    MpT:list = list()
+    noise   = list()
+    MpPr    = list()
+    MpT     = list()
 
     # Взятие словаря info из файла и взятие из него необходимых параметров
-    for dp in dir_pass:
-        info = df.pullFromDataFile(dp, False)
-        noise.append(info['charac_params']['noise'])
-        MpPr.append(info['test_result']['M[pPr]'])
-        MpT.append(info['test_result']['M[pT]'])
+    for dp in dirPass:
+        testResult = df.pullFromDataFile(dp, "testing-result")
+        charResult = df.pullFromDataFile(dp, "characterization-result")
+        noise_ = charResult['parameters']['noise']
+        MpPr_ = testResult['statistical-info']['M[pPr]']
+        MpT_ = testResult['statistical-info']['M[pT]']
+        
+        # print(f"{dp}: {noise_} | {MpPr_} | {MpT_}")
+        noise.append(noise_)
+        MpPr.append(MpPr_)
+        MpT.append(MpT_)
 
     l_noise = np.log(noise)
     l_MpPr = np.log(MpPr)

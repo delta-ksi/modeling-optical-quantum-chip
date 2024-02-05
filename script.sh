@@ -1,10 +1,9 @@
 #!/bin/bash
 
-data_folder_name='chip2x2/with-phase'
+data_folder_name='CNOT-ODRS/with-phase-nn-noise-1e-2'
 
 noises="\
-1e-5 1e-5 1e-5 1e-5 1e-5 1e-5 1e-5 1e-5 1e-5 1e-5 \
-1e-5 1e-5 1e-5 1e-5 1e-5 1e-5 1e-5 1e-5 1e-5 1e-5"
+1e-2 1e-2 1e-2 1e-2 1e-2 1e-2 1e-2 1e-2 1e-2 1e-2"
 
 i=1
 for n in $noises

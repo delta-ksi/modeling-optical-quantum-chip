@@ -146,7 +146,7 @@ fi
 if $char_flag; then
 
 	data_dir="./result"
-	if [ '$data_folder_name' != '' ]; then
+	if [ ! -z "$data_folder_name" ]; then
 		data_dir="$data_dir/$data_folder_name"
 	fi
 

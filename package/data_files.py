@@ -6,49 +6,49 @@ import os
 
 
 
-def createInfoFile(info: dict, dir_pass: str="") -> None:
-    if dir_pass != "":
-        file_pass = dir_pass + '/info'
-
-        output_s = pprint.pformat(info)
-
-        # Запись всей информации о характеризации в файл
-        with open(file_pass, 'wt') as fout:
-            fout.write(output_s)
+def createDataDir(dirPass : str,
+                  dirName : str = None) -> str:
+    nowData     : datetime  = datetime.datetime.today()
+    dirName     : str       = nowData.strftime('%Y%m%d-%H%M%S') if dirName == None else dirName
+    newDirPass  : str       = dirPass + '/' + dirName
+    os.makedirs(newDirPass)
+    return newDirPass    
 
 
 
-def pushToDataFile(info: dict, dir_pass: str="", gendir=True) -> None:
-    # Создание директории
-    if gendir:
-            today: datetime = datetime.datetime.today()
-            dir_pass: str   = dir_pass + '/' + today.strftime('%Y%m%d_%H%M%S')
-            os.makedirs(dir_pass)
+def pushToTextFile(info         : dict,
+                   dirPass      : str,
+                   fileName     : str   = "unnamed") -> None:
+    
+    filePass    : str = dirPass + '/' + fileName
+    text        : str = pprint.pformat(info)
 
-    if dir_pass != "":
-        file_pass: str  = dir_pass + '/data'
-
-        # Запись всех данных характеризации в файл
-        with open(file_pass, 'wb') as fout:
-            pickle.dump(info, fout)
+    with open(filePass, 'wt') as fout:
+        fout.write(text)
 
 
 
-def pullFromDataFile(dir_pass: str, dir=True) -> dict:
+def pushToDataFile(info         : dict,
+                   dirPass      : str,
+                   fileName     : str   = "unnamed") -> None:
 
-    file_pass: str = ''
+    filePass    : str  = dirPass + '/' + fileName + '.pickle'
+    
+    with open(filePass, 'wb') as fout:
+        pickle.dump(info, fout)
 
-    if dir:
-        file_pass = dir_pass + '/data'
-    else: 
-        file_pass = dir_pass
 
-	# Чтение всех данных моделирования из файла
-    data = dict()
-    with open(file_pass, 'rb')	as fin:
-        data = pickle.load(fin)
+
+def pullFromDataFile(dirPass : str,
+                     fileName: str) -> dict:
+
+    filePass = dirPass + '/' + fileName + '.pickle'
+
+    info = dict()
+    with open(filePass, 'rb') as fin:
+        info = pickle.load(fin)
 	
-    return data
+    return info
 
 
 
